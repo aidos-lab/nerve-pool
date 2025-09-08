@@ -1,0 +1,28 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/ENZYMES
+  seed: 2024
+  use_node_attr: false
+experiment:
+  name: topk-ENZYMES-2024
+logger:
+  log_dir: topk_2024
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: topk
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 3
+  max_num_nodes: null
+  module: models.topk
+  num_classes: 6
+  pool_ratio: 0.9
+result:
+  accuracy: 0.36666666666666664
+  loss: 6.611710071563721
+trainer:
+  epochs: 50
+  lr: 0.001

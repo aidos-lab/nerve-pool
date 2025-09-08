@@ -1,0 +1,29 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/MUTAG
+  seed: 2021
+  use_node_attr: false
+experiment:
+  name: nervepool-MUTAG-2021
+logger:
+  log_dir: diffpool_2021
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: diffpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 7
+  max_num_nodes: 150
+  module: models.nervepool
+  normalize: false
+  num_classes: 2
+  use_linear_layer: false
+result:
+  accuracy: 0.8648648648648649
+  loss: 3.3629696369171143
+trainer:
+  epochs: 100
+  lr: 0.01

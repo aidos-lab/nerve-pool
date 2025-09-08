@@ -1,0 +1,28 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/ENZYMES
+  seed: 2022
+  use_node_attr: false
+experiment:
+  name: sagpool-ENZYMES-2022
+logger:
+  log_dir: sagpool_2022
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: sagpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 3
+  max_num_nodes: null
+  module: models.sagpool
+  num_classes: 6
+  pool_ratio: 0.9
+result:
+  accuracy: 0.24166666666666667
+  loss: 6.911243438720703
+trainer:
+  epochs: 50
+  lr: 0.001

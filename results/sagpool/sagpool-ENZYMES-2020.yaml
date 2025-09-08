@@ -1,0 +1,28 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/ENZYMES
+  seed: 2020
+  use_node_attr: false
+experiment:
+  name: sagpool-ENZYMES-2020
+logger:
+  log_dir: sagpool_2020
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: sagpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 3
+  max_num_nodes: null
+  module: models.sagpool
+  num_classes: 6
+  pool_ratio: 0.9
+result:
+  accuracy: 0.225
+  loss: 6.613250732421875
+trainer:
+  epochs: 50
+  lr: 0.001

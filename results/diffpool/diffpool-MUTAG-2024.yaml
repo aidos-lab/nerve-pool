@@ -1,0 +1,29 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/MUTAG
+  seed: 2024
+  use_node_attr: false
+experiment:
+  name: diffpool-MUTAG-2024
+logger:
+  log_dir: diffpool_2024
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: diffpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 7
+  max_num_nodes: 150
+  module: models.diffpool
+  normalize: false
+  num_classes: 2
+  use_linear_layer: false
+result:
+  accuracy: 0.7297297297297297
+  loss: 4.96520471572876
+trainer:
+  epochs: 50
+  lr: 0.001

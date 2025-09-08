@@ -1,0 +1,29 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/ENZYMES
+  seed: 2021
+  use_node_attr: false
+experiment:
+  name: diffpool-ENZYMES-2021
+logger:
+  log_dir: diffpool_2021
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: diffpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 256
+  in_channels: 3
+  max_num_nodes: null
+  module: models.diffpool
+  normalize: false
+  num_classes: 6
+  use_linear_layer: false
+result:
+  accuracy: 0.3416666666666667
+  loss: 8.551472663879395
+trainer:
+  epochs: 100
+  lr: 0.005

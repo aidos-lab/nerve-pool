@@ -1,0 +1,28 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/PROTEINS
+  seed: 2022
+  use_node_attr: false
+experiment:
+  name: sagpool-PROTEINS-2022
+logger:
+  log_dir: sagpool_2022
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: sagpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 3
+  max_num_nodes: 700
+  module: models.sagpool
+  num_classes: 2
+  pool_ratio: 0.9
+result:
+  accuracy: 0.7837837837837838
+  loss: 3.572352409362793
+trainer:
+  epochs: 50
+  lr: 0.001

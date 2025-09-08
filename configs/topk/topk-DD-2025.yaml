@@ -1,0 +1,25 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/DD
+  seed: 2025
+  use_node_attr: false
+experiment:
+  name: topk-DD-2025
+logger:
+  log_dir: topk_2025
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: topk
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 89
+  max_num_nodes: 500
+  module: models.topk
+  num_classes: 2
+  pool_ratio: 0.9
+trainer:
+  epochs: 50
+  lr: 0.001

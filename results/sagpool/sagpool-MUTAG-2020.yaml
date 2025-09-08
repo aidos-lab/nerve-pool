@@ -1,0 +1,28 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/MUTAG
+  seed: 2020
+  use_node_attr: false
+experiment:
+  name: sagpool-MUTAG-2020
+logger:
+  log_dir: sagpool_2020
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: sagpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 7
+  max_num_nodes: 150
+  module: models.sagpool
+  num_classes: 2
+  pool_ratio: 0.9
+result:
+  accuracy: 0.7837837837837838
+  loss: 0.9476048946380615
+trainer:
+  epochs: 50
+  lr: 0.001

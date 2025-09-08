@@ -1,0 +1,27 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/PROTEINS
+  seed: 2025
+  use_node_attr: false
+experiment:
+  name: nopool-PROTEINS-2025
+logger:
+  log_dir: nopool_2025
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: nopool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 3
+  max_num_nodes: 700
+  module: models.nopool
+  num_classes: 2
+result:
+  accuracy: 0.7387387387387387
+  loss: 3.952468156814575
+trainer:
+  epochs: 50
+  lr: 0.001
