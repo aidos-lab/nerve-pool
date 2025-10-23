@@ -1,0 +1,27 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/ENZYMES
+  seed: 2022
+  use_node_attr: false
+experiment:
+  name: mincut-ENZYMES-2022
+logger:
+  log_dir: mincut_2022
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: mincut
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 3
+  max_num_nodes: null
+  mincut_temperature: 2
+  module: models.mincut
+  normalize: false
+  num_classes: 6
+  use_linear_layer: false
+trainer:
+  epochs: 50
+  lr: 0.001

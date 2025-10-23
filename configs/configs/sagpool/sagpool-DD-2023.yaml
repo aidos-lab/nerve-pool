@@ -1,0 +1,25 @@
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.tu
+  root: ./data/DD
+  seed: 2023
+  use_node_attr: false
+experiment:
+  name: sagpool-DD-2023
+logger:
+  log_dir: sagpool_2023
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: sagpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 89
+  max_num_nodes: 500
+  module: models.sagpool
+  num_classes: 2
+  pool_ratio: 0.9
+trainer:
+  epochs: 50
+  lr: 0.001
