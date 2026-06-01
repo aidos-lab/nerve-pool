@@ -15,6 +15,7 @@ def nerve_pool_mesh(
     device = node_features.device
     num_virtual_nodes = cluster_assignments.shape[1]
     batch_size = batch.max() + 1
+    print("batch_size", batch_size)
 
 
     ########################################################
@@ -45,14 +46,16 @@ def nerve_pool_mesh(
         ),
         device=device,
     ).T
+    print(virtual_face_index)
 
     num_virtual_faces = virtual_face_index.shape[1]
     s = cluster_assignments
 
     # Down Function
-    s_faces_virtual_nodes = cluster_assignments[face_index].max(dim=0)[0]
     s_edges_virtual_nodes = cluster_assignments[edge_index].max(dim=0)[0]
+    s_faces_virtual_nodes = cluster_assignments[face_index].max(dim=0)[0]
     s = torch.vstack([s, s_edges_virtual_nodes,s_faces_virtual_nodes])
+    
 
     # Right function (naming convention by)
     s_all_virtual_edges = s[:, virtual_edge_index].min(dim=1)[0]
@@ -136,7 +139,7 @@ def nerve_pool_mesh(
         sparse_virtual_edge_index[:, m_edges],
         sparse_virtual_face_index[:, m_faces],
         torch.repeat_interleave(
-            torch.arange(batch_size, device=device), num_virtual_nodes+num_virtual_edges+num_virtual_faces 
+            torch.arange(batch_size, device=device), num_virtual_nodes
         ),
     )
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import networkx as nx 
 import torch
 from torch_geometric.utils import to_networkx 
-from src.models.poolers.nervepool import nerve_pool_mesh
+# from src.models.poolers.nervepool import nerve_pool_mesh
 from torch_geometric.data import Data 
 import torch
 import torch.nn.functional as F
@@ -20,7 +20,7 @@ config = DataConfig(
     module="",
     root="./data/mantra2d",
     seed=2025,
-   batch_size=1,
+    batch_size=1,
     use_node_attr=False,
     cleaned=False,
 )
@@ -34,209 +34,162 @@ for batch in dl_train:
 
 
 #|%%--%%| <88TGqfyTQv|BYCtCOalMr>
+import itertools 
 
-@dataclass
-class ModelConfig:
-    module: str
-    in_channels: int
-    num_classes: int
-    use_linear_layer: bool
-    normalize: bool
-    hidden_linear_layer: int
-    hidden_channels: int
-    max_num_nodes: int
+def nerve_pool_mesh(
+    node_features,
+    edge_features,
+    edge_index,
+    face_features,
+    face_index,
+    cluster_assignments,
+    batch,
+):
+    device = node_features.device
+    num_virtual_nodes = cluster_assignments.shape[1]
+    batch_size = batch.max() + 1
+    print("batch_size", batch_size)
 
 
-class GNN(torch.nn.Module):
-    def __init__(self, in_channels, config: ModelConfig,num_virt_nodes: int=5):
-        super().__init__()
-        self.conv1 = GCNConv(
-            in_channels,
-            config.hidden_channels,
-            config.normalize,
-        )
-        self.bn1 = torch.nn.BatchNorm1d(config.hidden_channels)
-        self.conv2 = GCNConv(
-            config.hidden_channels,
-            config.hidden_channels,
-            config.normalize,
-        )
-        self.bn2 = torch.nn.BatchNorm1d(config.hidden_channels)
-        self.conv3 = GCNConv(
-            config.hidden_channels,
-            config.hidden_channels,
-            config.normalize,
-        )
-        self.bn3 = torch.nn.BatchNorm1d(config.hidden_channels)
-        if config.use_linear_layer:
-            self.lin = torch.nn.Linear(
-                config.hidden_channels,
-                num_virt_nodes,
+    ########################################################
+    ## Edges
+    ########################################################
+
+
+    # Initialize
+    virtual_edge_index = torch.tensor(
+        list(
+            itertools.combinations(
+                range(num_virtual_nodes),
+                2,
             )
-        else:
-            self.lin = None
+        ),
+        device=device,
+    ).T
 
-    def bn(self, i, x):
-        x = getattr(self, f"bn{i}")(x)
-        return x
+    num_virtual_edges = virtual_edge_index.shape[1]
 
-    def forward(self, x, adj, mask=None):
-        x = self.bn(1, self.conv1(x, adj, mask).relu())
-        x = self.bn(2, self.conv2(x, adj, mask).relu())
-        x = self.bn(3, self.conv3(x, adj, mask).relu())
-        # x = self.conv1(x, adj, mask).relu()
-        # x = self.conv2(x, adj, mask).relu()
-        # x = self.conv3(x, adj, mask).relu()
-        if self.lin is not None:
-            x = self.lin(x).relu()
-        return F.softmax(x, dim=-1)
+    # Initialize
+    virtual_face_index = torch.tensor(
+        list(
+            itertools.combinations(
+                range(num_virtual_nodes),
+                3,
+            )
+        ),
+        device=device,
+    ).T
+    print(virtual_face_index)
 
+    num_virtual_faces = virtual_face_index.shape[1]
+    s = cluster_assignments
 
-class Model(torch.nn.Module):
-    def __init__(self, config: ModelConfig):
-        super().__init__()
+    # Down Function
+    s_edges_virtual_nodes = cluster_assignments[edge_index].max(dim=0)[0]
+    s_faces_virtual_nodes = cluster_assignments[face_index].max(dim=0)[0]
+    s = torch.vstack([s, s_edges_virtual_nodes,s_faces_virtual_nodes])
+    
 
-        # First layer
-        self.gnn1_embed = GCNConv(config.in_channels, config.hidden_channels)
-        self.gnn1_pool = GNN(config.in_channels, config)
+    # Right function (naming convention by)
+    s_all_virtual_edges = s[:, virtual_edge_index].min(dim=1)[0]
 
-        # Second layer
-        self.gnn2_embed = GCNConv(config.hidden_channels, 5)
-        self.gnn2_pool = GNN(config.hidden_channels, config)
+    # Check which columns have all zeros per batch.
+    batched_edge_index = batch[edge_index][0]
+    # non_empty_mask = s_all_virtual_edges.abs().sum(dim=0).bool()
+    # s_all_virtual_edges = s_all_virtual_edges[:, non_empty_mask]
 
-        # Third layer
-        self.gnn3_embed = GCNConv(config.hidden_channels, config.hidden_channels)
-
-        # Final Aggragation
-        self.lin1 = torch.nn.Linear(config.hidden_channels, config.hidden_linear_layer)
-        self.lin2 = torch.nn.Linear(config.hidden_linear_layer, config.num_classes)
-        self.config = config
-
-    def forward(self, data):
-
-        x, edge_index,face_index = data.x, data.edge_index, data.face
-
-        # First layer
-        s = self.gnn1_pool(x, edge_index)
-        x = self.gnn1_embed(x, edge_index)
-
-        x = F.relu(x)
-        adj = to_dense_adj(
-            edge_index,
-            data.batch,
-            max_num_nodes=self.config.max_num_nodes,
-        )
-
-        s_dense, _ = to_dense_batch(
-            s,
-            batch=data.batch,
-            max_num_nodes=self.config.max_num_nodes,
-        )
-
-        link_loss = adj - torch.matmul(s_dense, s_dense.transpose(1, 2))
-        link_loss = torch.norm(link_loss, p=2)
-        link_loss_1 = link_loss / adj.numel()
-
-        ent_loss_1 = (-s_dense * torch.log(s_dense + 1e-15)).sum(dim=-1).mean()
-
-        edge_features = torch.zeros(
-            size=(edge_index.shape[1], x.shape[1]), device=x.device
-        )
-
-        face_features = torch.zeros(
-            size=(face_index.shape[1], x.shape[1]), device=x.device
-        )
-
-        print("x",x.shape)
-        print("edge_features",edge_features.shape,edge_index.shape)
-        print("s",s.shape)
-        # Try argmax.
-        # Try to add edge features.
-        # Pool.
-        x, edge_features, face_features, edge_index,face_index, batch_index = nerve_pool_mesh(
-            node_features=x,
-            cluster_assignments=s,
-            edge_features=edge_features,
-            edge_index=edge_index,
-            face_features=face_features,
-            face_index=face_index,
-            batch=data.batch,
-        )
-        print("x",x.shape)
-        print("edge_features",edge_features.shape,edge_index.shape)
-
-        # Second layer
-        s = self.gnn2_pool(x, edge_index)
-        x = self.gnn2_embed(x, edge_index)
-        x = F.relu(x)
-
-        print(edge_index)
-        print(face_index.shape)
-        print(x)
-        print(batch_index.shape)
-
-        # # Loss
-        # adj = to_dense_adj(edge_index, batch_index)
-        # s_dense, _ = to_dense_batch(s, batch=batch_index)
-        #
-        # link_loss = adj - torch.matmul(s_dense, s_dense.transpose(1, 2))
-        # link_loss = torch.norm(link_loss, p=2)
-        # link_loss_2 = link_loss / adj.numel()
-        #
-        # ent_loss_2 = (-s_dense * torch.log(s_dense + 1e-15)).sum(dim=-1).mean()
-        #
-        # # breakpoint()
-        # # link_loss_2 = F.mse_loss(torch.bmm(s_dense, s_dense.movedim(-1, -2)), adj)
-        #
-        # # Pool
-        # x, edge_features, face_features, edge_index,face_index, batch_index = nerve_pool_mesh(
-        #     node_features=x,
-        #     cluster_assignments=s,
-        #     edge_features=edge_features,
-        #     edge_index=edge_index,
-        #     face_features=face_features,
-        #     face_index=face_index,
-        #     batch=data.batch,
-        # )
-        #
-        # # Third layer
-        # x = self.gnn3_embed(x, edge_index)
-        # x = F.relu(x)
-        #
-        # # Potential bug
-        # # x = x.mean(dim=1)
-        # x = global_mean_pool(x, batch_index)
-        # x = self.lin1(x)
-        # x = F.relu(x)
-        # x = self.lin2(x)
-        # return F.log_softmax( x, dim=-1), link_loss_1 + link_loss_2 + ent_loss_1 + ent_loss_2
-
-import copy
-
-config = ModelConfig(
-    module="",
-  hidden_channels= 64,
-  hidden_linear_layer= 64,
-  in_channels= 8,
-  max_num_nodes= 500,
-  normalize= False,
-  num_classes= 2,
-  use_linear_layer= True)
-
-model = Model(config)
+    s = torch.hstack([s, s_all_virtual_edges])
+    full_batch_index = torch.hstack([batch, batched_edge_index])
+    # ind = full_batch_index.argsort(dim=0)
+    #
+    # dense_s, _ = to_dense_batch(s[ind], full_batch_index[ind])
+    # non_zero_mask = dense_s.max(dim=1)[0].bool()
+    # dense_features, _ = to_dense_batch(
+    #     torch.vstack([node_features, edge_features])[ind], full_batch_index[ind]
+    # )
+    #
+    # pooled_features = torch.bmm(dense_s.movedim(-1, -2), dense_features)
+    #
+    # m = non_zero_mask[:, num_virtual_nodes:].reshape(-1)
+    #
+    # sparse_virtual_edge_index = virtual_edge_index.repeat(
+    #     1, batch_size
+    # ) + num_virtual_nodes * torch.arange(batch_size, device=device).repeat_interleave(
+    #     virtual_edge_index.shape[1]
+    # ).unsqueeze(
+    #     0
+    # )
 
 
-model(copy.deepcopy(batch))
+    ########################################################
+    ## Faces
+    ########################################################
 
-#|%%--%%| <BYCtCOalMr|n5kjWluqHm>
+    # Right function (naming convention by)
+    s_all_virtual_faces = s[:, virtual_face_index].min(dim=1)[0]
+
+    # Check which columns have all zeros per batch.
+    batched_face_index = batch[face_index][0]
+    # non_empty_mask = s_all_virtual_edges.abs().sum(dim=0).bool()
+    # s_all_virtual_edges = s_all_virtual_edges[:, non_empty_mask]
+
+    s = torch.hstack([s, s_all_virtual_faces])
+    full_batch_index = torch.hstack([full_batch_index, batched_face_index])
+    ind = full_batch_index.argsort(dim=0)
+
+    dense_s, _ = to_dense_batch(s[ind], full_batch_index[ind])
+    non_zero_mask = dense_s.max(dim=1)[0].bool()
+    dense_features, _ = to_dense_batch(
+        torch.vstack([node_features, edge_features,face_features])[ind], full_batch_index[ind]
+    )
+
+    pooled_features = torch.bmm(dense_s.movedim(-1, -2), dense_features)
+
+    m_edges = non_zero_mask[:, num_virtual_nodes:num_virtual_nodes+num_virtual_edges].reshape(-1)
+    m_faces = non_zero_mask[:, num_virtual_nodes+num_virtual_edges:].reshape(-1)
+
+    sparse_virtual_edge_index = virtual_edge_index.repeat(
+        1, batch_size
+    ) + num_virtual_nodes * torch.arange(batch_size, device=device).repeat_interleave(
+        virtual_edge_index.shape[1]
+    ).unsqueeze(
+        0
+    )
+    sparse_virtual_face_index = virtual_face_index.repeat(
+        1, batch_size
+    ) + num_virtual_faces * torch.arange(batch_size, device=device).repeat_interleave(
+        virtual_face_index.shape[1]
+    ).unsqueeze(
+        0
+    )
+    print(m_edges.shape)
+    print(m_faces.shape)
+
+    return (
+        pooled_features[:, :num_virtual_nodes, :].reshape(-1, node_features.shape[1]),
+        pooled_features[:, num_virtual_nodes:num_virtual_nodes+num_virtual_edges, :].reshape(-1, edge_features.shape[1]),
+        pooled_features[:, num_virtual_nodes+num_virtual_edges:num_virtual_faces + num_virtual_nodes+num_virtual_edges, :].reshape(-1, edge_features.shape[1]),
+        sparse_virtual_edge_index[:, m_edges],
+        sparse_virtual_face_index[:, m_faces],
+        torch.repeat_interleave(
+            torch.arange(batch_size, device=device), num_virtual_nodes
+        ),
+    )
 
 
 
-#|%%--%%| <n5kjWluqHm|D1nZcTtZR3>
 
 
+#|%%--%%| <BYCtCOalMr|AQSdgk5Xff>
 
-#|%%--%%| <D1nZcTtZR3|OTI84azVTr>
+
+x = batch.x 
+edge_index = batch.edge_index 
+edge_features = torch.rand(size=(edge_index.shape[1],8))
+face_index = batch.face
+face_features = torch.rand(size=(face_index.shape[1],8))
+cluster_assignments = torch.rand(size=(x.shape[1],5))
+
 
 
 # Pool
@@ -247,26 +200,26 @@ x_new, edge_features, face_features, out_edge_index,out_face_index, out_batch_in
     edge_index=edge_index,
     face_features=face_features,
     face_index=face_index,
-    batch=batch,
+    batch=batch.batch,
 )
-print(cluster_assignments)
-print(x.shape)
-print("------")
-print(out_edge_index.shape)
-print(out_edge_index)
-print(out_face_index)
-print(x_new.shape)
-print(x_new)
-labels_p = { 
-          0:"a", 
- 1:"b",
- 2:"c",
- 3:"d"}
- 
-print(out_edge_index)
-out_torch = Data(edge_index=out_edge_index,num_nodes=4)
-G_pooled = to_networkx(out_torch)
-nx.draw(G_pooled,pos=x_new,labels=labels_p)
+# print(cluster_assignments)
+# print(x.shape)
+# print("------")
+# print(out_edge_index.shape)
+# print(out_edge_index)
+# print(out_face_index)
+# print(x_new.shape)
+# print(x_new)
+# labels_p = { 
+#           0:"a", 
+#  1:"b",
+#  2:"c",
+#  3:"d"}
+#
+# print(out_edge_index)
+# out_torch = Data(edge_index=out_edge_index,num_nodes=4)
+# G_pooled = to_networkx(out_torch)
+# nx.draw(G_pooled,pos=x_new,labels=labels_p)
 
 
 
