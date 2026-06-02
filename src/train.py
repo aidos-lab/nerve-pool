@@ -1,3 +1,5 @@
+"""Code for the first set of experiments."""
+
 import argparse
 import os
 import sys
@@ -46,7 +48,8 @@ def train_loop(model, train_loader, optimizer):
     model.train()
     total_loss = 0
     for i, data in enumerate(train_loader):
-        # print(i, data.num_nodes)
+        print(i)
+        breakpoint()
         data = data.to(DEVICE)
         optimizer.zero_grad()
         output, link_loss = model(data)
@@ -155,6 +158,7 @@ def main():
     #####################################################
     ### Argparse
     #####################################################
+    print("hello")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("INPUT", type=str, help="Input configuration")

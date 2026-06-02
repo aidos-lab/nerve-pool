@@ -12,37 +12,38 @@ import os
 from dataclasses import dataclass
 
 import torch
-from torch_geometric.data import Data
 import yaml
-from torch.utils.data import random_split
-from torch_geometric.loader import DataLoader
 from mantra.datasets import ManifoldTriangulations
+from mantra.representations.one_skeleton import OneSkeleton
 from mantra.transforms import NodeRandomTransform
-from mantra.representations.one_skeleton import OneSkeleton 
-from torchvision.transforms import Compose 
+from torch.utils.data import random_split
+from torch_geometric.data import Data
+from torch_geometric.loader import DataLoader
+from torchvision.transforms import Compose
 
 NAME_TO_CLASS_2M = {
-        '#^3 T^2': 0, 
-        'S^2': 1, 
-        '#^4 RP^2': 2, 
-        '#^15 RP^2': 3, 
-        '#^2 T^2': 4, 
-        '#^10 RP^2': 5, 
-        '#^5 T^2': 6, 
-        '#^6 T^2': 7, 
-        'Klein bottle': 8, 
-        'T^2': 9, 
-        '#^8 RP^2': 10, 
-        '#^12 RP^2': 11, 
-        '#^7 RP^2': 12, 
-        '#^16 RP^2': 13, 
-        '#^8 T^2': 14, 
-        '#^17 RP^2': 15, 
-        'RP^2': 16, 
-        '#^5 RP^2': 17, 
-        '#^4 T^2': 18, 
-        '#^6 RP^2': 19, 
-        '#^3 RP^2': 20}
+    "#^3 T^2": 0,
+    "S^2": 1,
+    "#^4 RP^2": 2,
+    "#^15 RP^2": 3,
+    "#^2 T^2": 4,
+    "#^10 RP^2": 5,
+    "#^5 T^2": 6,
+    "#^6 T^2": 7,
+    "Klein bottle": 8,
+    "T^2": 9,
+    "#^8 RP^2": 10,
+    "#^12 RP^2": 11,
+    "#^7 RP^2": 12,
+    "#^16 RP^2": 13,
+    "#^8 T^2": 14,
+    "#^17 RP^2": 15,
+    "RP^2": 16,
+    "#^5 RP^2": 17,
+    "#^4 T^2": 18,
+    "#^6 RP^2": 19,
+    "#^3 RP^2": 20,
+}
 
 
 class NameToClass2MTransform:
@@ -58,6 +59,7 @@ class NameToClass2MTransform:
         data.y = torch.tensor(self.class_dict[data.name]).unsqueeze(0)
         return data
 
+
 max_node_dict = {
     "mantra2d": None,
 }
@@ -70,11 +72,24 @@ prefilter_dict = {
     "mantra2d": None,
 }
 
-class ManifoldToFace:
-    def __call__(self,data):
 
-        data.face = torch.tensor(data.triangulation).T - 1  
+class ManifoldToFace:
+    def __call__(self, data):
+
+        data.face = torch.tensor(data.triangulation).T - 1
         return data
+
+
+class Propagate:
+    def __call__(self, data):
+        data.edge_features = torch.tensor(data.x, dtype=torch.float32)[
+            data.edge_index
+        ].mean(dim=0)
+        data.face_features = torch.tensor(data.x, dtype=torch.float32)[data.face].mean(
+            dim=0
+        )
+        return data
+
 
 @dataclass
 class DataConfig:
@@ -100,10 +115,18 @@ def get_dataset(config: DataConfig, force_reload: bool = True):
     ###########################################
 
     ds = ManifoldTriangulations(
-        root="./data",      # root folder for storing data
-        dimension=2,        # Whether to load 2- or 3-manifolds
-        version="latest",    # Which version of the dataset to load
-        transform=Compose([OneSkeleton(),ManifoldToFace(),NodeRandomTransform(dim=8),NameToClass2MTransform()])
+        root="./data",  # root folder for storing data
+        dimension=2,  # Whether to load 2- or 3-manifolds
+        version="latest",  # Which version of the dataset to load
+        transform=Compose(
+            [
+                OneSkeleton(),
+                ManifoldToFace(),
+                NodeRandomTransform(dim=5),
+                NameToClass2MTransform(),
+                Propagate(),
+            ]
+        ),
     )
 
     ###########################################
@@ -134,9 +157,7 @@ def get_dataloaders(config: DataConfig, force_reload: bool = True):
     ds = get_dataset(config, force_reload=force_reload)
 
     generator = torch.Generator().manual_seed(config.seed)
-    train_ds, val_ds, test_ds = random_split(
-        ds, [0.7, 0.1, 0.2], generator=generator
-    )  # type: ignore
+    train_ds, val_ds, test_ds = random_split(ds, [0.7, 0.1, 0.2], generator=generator)  # type: ignore
 
     train_dataloader = DataLoader(
         train_ds,  # type: ignore
@@ -174,4 +195,4 @@ if __name__ == "__main__":
     )
 
     # get_dataset(config=config, force_reload=True)
-    get_dataloaders(config=config,force_reload=False)
+    get_dataloaders(config=config, force_reload=False)
