@@ -1,0 +1,35 @@
+config:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 5
+  max_num_nodes: null
+  module: models.diffpool
+  normalize: false
+  num_classes: 21
+  use_linear_layer: false
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.mantra2d
+  root: data/mantra2d
+  seed: 2025
+  use_node_attr: false
+experiment:
+  name: diffpool-mantra2d-2025
+logger:
+  log_dir: diffpool
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: diffpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 5
+  max_num_nodes: null
+  module: models.diffpool
+  normalize: false
+  num_classes: 21
+  use_linear_layer: false
+trainer:
+  epochs: 20
+  lr: 0.001

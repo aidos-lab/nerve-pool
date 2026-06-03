@@ -1,0 +1,33 @@
+config:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 5
+  max_num_nodes: null
+  module: models.sagpool
+  num_classes: 21
+  pool_ratio: 0.9
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.mantra2d
+  root: data/mantra2d
+  seed: 2025
+  use_node_attr: false
+experiment:
+  name: sagpool-mantra2d-2025
+logger:
+  log_dir: sagpool
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: sagpool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 5
+  max_num_nodes: null
+  module: models.sagpool
+  num_classes: 21
+  pool_ratio: 0.9
+trainer:
+  epochs: 20
+  lr: 0.001

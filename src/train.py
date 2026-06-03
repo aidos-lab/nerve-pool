@@ -48,13 +48,12 @@ def train_loop(model, train_loader, optimizer):
     model.train()
     total_loss = 0
     for i, data in enumerate(train_loader):
-        print(i)
-        breakpoint()
         data = data.to(DEVICE)
         optimizer.zero_grad()
         output, link_loss = model(data)
         loss = F.nll_loss(output, data.y.view(-1)) + link_loss
         loss.backward()
+        print(i, loss.item())
         total_loss += loss.item()
         optimizer.step()
     return Result(loss=total_loss)

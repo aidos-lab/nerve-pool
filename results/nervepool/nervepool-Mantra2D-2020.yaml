@@ -1,5 +1,5 @@
 dataset:
-  batch_size: 64 
+  batch_size: 64
   cleaned: false
   module: datasets.mantra2d
   root: ./data/mantra2d
@@ -21,6 +21,9 @@ model:
   normalize: false
   num_classes: 21
   use_linear_layer: false
+result:
+  accuracy: 0.9249016431381625
+  loss: 29.33627700805664
 trainer:
   epochs: 10
   lr: 0.001

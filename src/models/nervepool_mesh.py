@@ -43,7 +43,7 @@ class GNN(torch.nn.Module):
         self.bn3 = torch.nn.BatchNorm1d(config.hidden_channels)
         self.lin = torch.nn.Linear(
             config.hidden_channels,
-            config.hidden_channels,
+            3,
         )
 
     def bn(self, i, x):
@@ -79,10 +79,30 @@ class Model(torch.nn.Module):
         ### Second layer
         ##############################################
 
+        # Pooling model
+        self.gnn2_pool_edges = GNN(config.hidden_channels, config)
+
         # Embedding
         self.gnn2_embed_nodes = GCNConv(config.hidden_channels, config.hidden_channels)
-        self.gnn2_embed_edges = nn.Linear(config.in_channels, config.hidden_channels)
-        self.gnn2_embed_faces = nn.Linear(config.in_channels, config.hidden_channels)
+        self.gnn2_embed_edges = nn.Linear(
+            config.hidden_channels, config.hidden_channels
+        )
+        self.gnn2_embed_faces = nn.Linear(
+            config.hidden_channels, config.hidden_channels
+        )
+
+        ##############################################
+        ### Third layer
+        ##############################################
+
+        # Embedding
+        self.gnn3_embed_nodes = GCNConv(config.hidden_channels, config.hidden_channels)
+        self.gnn3_embed_edges = nn.Linear(
+            config.hidden_channels, config.hidden_channels
+        )
+        self.gnn3_embed_faces = nn.Linear(
+            config.hidden_channels, config.hidden_channels
+        )
 
         ##############################################
         ### Final Aggragation
@@ -143,8 +163,49 @@ class Model(torch.nn.Module):
             )
         )
 
-        # Second layer
+        ##############################################
+        ### Second layer
+        ##############################################
+
+        s = self.gnn2_pool_edges(x, edge_index)
         x = self.gnn2_embed_nodes(x, edge_index)
+        x = F.relu(x)
+
+        edge_features = self.gnn2_embed_edges(edge_features)
+        face_features = self.gnn2_embed_faces(face_features)
+
+        adj = to_dense_adj(
+            edge_index,
+            batch_index,
+            max_num_nodes=self.config.max_num_nodes,
+        )
+        s_dense, _ = to_dense_batch(
+            s,
+            batch=batch_index,
+            max_num_nodes=self.config.max_num_nodes,
+        )
+
+        link_loss = adj - torch.matmul(s_dense, s_dense.transpose(1, 2))
+        link_loss = torch.norm(link_loss, p=2)
+        link_loss_1 = link_loss / adj.numel()
+
+        ent_loss_1 = (-s_dense * torch.log(s_dense + 1e-15)).sum(dim=-1).mean()
+
+        # Pool.
+        x, edge_features, face_features, edge_index, face_index, batch_index = (
+            nerve_pool_mesh(
+                node_features=x,
+                edge_features=edge_features,
+                face_features=face_features,
+                face_index=face_index,
+                cluster_assignments=s,
+                edge_index=edge_index,
+                batch=batch_index,
+            )
+        )
+
+        # Second layer
+        x = self.gnn3_embed_nodes(x, edge_index)
         x = F.relu(x)
 
         x = global_mean_pool(x, batch_index)

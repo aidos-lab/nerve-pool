@@ -82,12 +82,8 @@ class ManifoldToFace:
 
 class Propagate:
     def __call__(self, data):
-        data.edge_features = torch.tensor(data.x, dtype=torch.float32)[
-            data.edge_index
-        ].mean(dim=0)
-        data.face_features = torch.tensor(data.x, dtype=torch.float32)[data.face].mean(
-            dim=0
-        )
+        data.edge_features = data.x[data.edge_index].mean(dim=0)
+        data.face_features = data.x[data.face].mean(dim=0)
         return data
 
 

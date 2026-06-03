@@ -1,14 +1,22 @@
+config:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 5
+  max_num_nodes: null
+  module: models.nervepool_mesh
+  normalize: false
+  num_classes: 21
 dataset:
-  batch_size: 64 
+  batch_size: 32
   cleaned: false
   module: datasets.mantra2d
-  root: ./data/mantra2d
-  seed: 2020
+  root: data/mantra2d
+  seed: 2023
   use_node_attr: false
 experiment:
-  name: nervepool-Mantra2D-2020
+  name: nervepool_mesh-mantra2d-2023
 logger:
-  log_dir: mantra2d_2020
+  log_dir: nervepool
   log_interval: 10
   logger_name: csvlogger
   model_str: nervepool
@@ -16,11 +24,10 @@ model:
   hidden_channels: 64
   hidden_linear_layer: 64
   in_channels: 5
-  max_num_nodes: 10
+  max_num_nodes: null
   module: models.nervepool_mesh
   normalize: false
   num_classes: 21
-  use_linear_layer: false
 trainer:
-  epochs: 10
+  epochs: 20
   lr: 0.001

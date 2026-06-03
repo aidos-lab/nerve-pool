@@ -1,0 +1,63 @@
+dataset: 
+  module: datasets.mantra2d
+  root: data/mantra2d
+  seed: 
+    - 2025
+    - 2024
+    - 2023
+    - 2022 
+    - 2021
+    - 2020
+  batch_size: 32
+  use_node_attr: False
+  cleaned: False
+
+model: 
+  - module: models.diffpool
+    hidden_channels: 64
+    hidden_linear_layer: 64
+    use_linear_layer: False
+    normalize: False
+  - module: models.mincut
+    hidden_channels: 64
+    hidden_linear_layer: 64
+    use_linear_layer: False
+    mincut_temperature: 2
+    normalize: False
+  - module: models.nervepool_mesh
+    hidden_channels: 64
+    hidden_linear_layer: 64
+    normalize: False
+  - module: models.nopool
+    hidden_channels: 64
+    hidden_linear_layer: 64
+  - module: models.sagpool
+    hidden_channels: 64
+    hidden_linear_layer: 64
+    pool_ratio: 0.9
+  - module: models.topk
+    pool_ratio: 0.9
+    hidden_channels: 64
+    hidden_linear_layer: 64
+
+logger: 
+  log_dir: 
+    - diffpool
+    - mincut
+    - nervepool 
+    - nopool 
+    - sagpool 
+    - topk
+  model_str: 
+    - diffpool
+    - mincut
+    - nervepool 
+    - nopool 
+    - sagpool 
+    - topk
+  log_interval: 10
+  logger_name: csvlogger
+
+trainer:
+  epochs: 20
+  lr: 0.001
