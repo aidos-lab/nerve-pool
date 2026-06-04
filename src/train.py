@@ -53,7 +53,6 @@ def train_loop(model, train_loader, optimizer):
         output, link_loss = model(data)
         loss = F.nll_loss(output, data.y.view(-1)) + link_loss
         loss.backward()
-        print(i, loss.item())
         total_loss += loss.item()
         optimizer.step()
     return Result(loss=total_loss)

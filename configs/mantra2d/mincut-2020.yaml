@@ -1,13 +1,3 @@
-config:
-  hidden_channels: 64
-  hidden_linear_layer: 64
-  in_channels: 5
-  max_num_nodes: null
-  mincut_temperature: 2
-  module: models.mincut
-  normalize: false
-  num_classes: 21
-  use_linear_layer: false
 dataset:
   batch_size: 32
   cleaned: false
@@ -26,7 +16,7 @@ model:
   hidden_channels: 64
   hidden_linear_layer: 64
   in_channels: 5
-  max_num_nodes: null
+  max_num_nodes: 10
   mincut_temperature: 2
   module: models.mincut
   normalize: false

@@ -3,7 +3,7 @@ config:
   hidden_linear_layer: 64
   in_channels: 5
   max_num_nodes: null
-  module: models.nervepool
+  module: models.diffpool
   normalize: false
   num_classes: 21
   use_linear_layer: false
@@ -15,21 +15,24 @@ dataset:
   seed: 2025
   use_node_attr: false
 experiment:
-  name: nervepool-mantra2d-2025
+  name: diffpool-mantra2d-2025
 logger:
-  log_dir: nervepool
+  log_dir: diffpool
   log_interval: 10
   logger_name: csvlogger
-  model_str: nervepool
+  model_str: diffpool
 model:
   hidden_channels: 64
   hidden_linear_layer: 64
   in_channels: 5
   max_num_nodes: null
-  module: models.nervepool
+  module: models.diffpool
   normalize: false
   num_classes: 21
   use_linear_layer: false
+result:
+  accuracy: 0.4848414718815089
+  loss: 409.40057373046875
 trainer:
-  epochs: 50
+  epochs: 20
   lr: 0.001

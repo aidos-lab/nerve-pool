@@ -20,10 +20,12 @@ class ModelConfig:
 
 
 class GNN(torch.nn.Module):
-    def __init__(self, config: ModelConfig):
+    def __init__(self, in_channels, config: ModelConfig):
         super().__init__()
         self.conv1 = DenseGCNConv(
-            config.in_channels, config.hidden_channels, config.normalize
+            in_channels,
+            config.hidden_channels,
+            config.normalize,
         )
         self.bn1 = torch.nn.BatchNorm1d(config.hidden_channels)
         self.conv2 = DenseGCNConv(
@@ -34,10 +36,6 @@ class GNN(torch.nn.Module):
             config.hidden_channels, config.hidden_channels, config.normalize
         )
         self.bn3 = torch.nn.BatchNorm1d(config.hidden_channels)
-        if config.use_linear_layer:
-            self.lin = torch.nn.Linear(config.hidden_channels, config.hidden_channels)
-        else:
-            self.lin = None
 
     def bn(self, i, x):
         # This is not correct either. For the first layer this encodes (unintendedly)
@@ -60,8 +58,8 @@ class Model(torch.nn.Module):
         super().__init__()
         self.config = config
         self.gnn1_embed = DenseGCNConv(config.in_channels, config.hidden_channels)
-        self.gnn1_pool = GNN(config)
-        self.gnn2_pool = GNN(config)
+        self.gnn1_pool = GNN(in_channels=config.in_channels, config=config)
+        self.gnn2_pool = GNN(in_channels=64, config=config)
         self.gnn2_embed = DenseGCNConv(config.hidden_channels, config.hidden_channels)
         self.gnn3_embed = DenseGCNConv(config.hidden_channels, config.hidden_channels)
         self.lin1 = torch.nn.Linear(config.hidden_channels, config.hidden_linear_layer)
