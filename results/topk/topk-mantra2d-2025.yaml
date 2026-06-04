@@ -1,0 +1,36 @@
+config:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 5
+  max_num_nodes: null
+  module: models.topk
+  num_classes: 21
+  pool_ratio: 0.9
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.mantra2d
+  root: data/mantra2d
+  seed: 2025
+  use_node_attr: false
+experiment:
+  name: topk-mantra2d-2025
+logger:
+  log_dir: topk
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: topk
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 5
+  max_num_nodes: null
+  module: models.topk
+  num_classes: 21
+  pool_ratio: 0.9
+result:
+  accuracy: 0.4228187919463087
+  loss: 392.6756896972656
+trainer:
+  epochs: 20
+  lr: 0.001

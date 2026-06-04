@@ -1049,7 +1049,7 @@ wheels = [
 ]
 
 [[package]]
-name = "nerve-pool-ml"
+name = "nerve-pool"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

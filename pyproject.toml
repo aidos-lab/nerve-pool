@@ -1,5 +1,5 @@
 [project]
-name = "nerve-pool-ml"
+name = "nerve-pool"
 version = "0.1.0"
 description = "A pooling layer for simplicial complexes."
 readme = "README.md"

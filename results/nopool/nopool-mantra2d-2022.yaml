@@ -1,0 +1,34 @@
+config:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 5
+  max_num_nodes: null
+  module: models.nopool
+  num_classes: 21
+dataset:
+  batch_size: 32
+  cleaned: false
+  module: datasets.mantra2d
+  root: data/mantra2d
+  seed: 2022
+  use_node_attr: false
+experiment:
+  name: nopool-mantra2d-2022
+logger:
+  log_dir: nopool
+  log_interval: 10
+  logger_name: csvlogger
+  model_str: nopool
+model:
+  hidden_channels: 64
+  hidden_linear_layer: 64
+  in_channels: 5
+  max_num_nodes: null
+  module: models.nopool
+  num_classes: 21
+result:
+  accuracy: 0.4430687340893312
+  loss: 377.22869873046875
+trainer:
+  epochs: 20
+  lr: 0.001

@@ -1,29 +1,30 @@
 dataset:
-  batch_size: 64
+  batch_size: 32
   cleaned: false
   module: datasets.mantra2d
-  root: ./data/mantra2d
+  root: data/mantra2d
   seed: 2020
   use_node_attr: false
 experiment:
-  name: mantra-diffpool
+  name: mincut-mantra2d-2020
 logger:
-  log_dir: mantra2d_2020
+  log_dir: mincut
   log_interval: 10
   logger_name: csvlogger
-  model_str: diffpool
+  model_str: mincut
 model:
   hidden_channels: 64
   hidden_linear_layer: 64
   in_channels: 5
   max_num_nodes: 10
-  module: models.diffpool_mesh
+  mincut_temperature: 2
+  module: models.mincut
   normalize: false
   num_classes: 21
   use_linear_layer: false
 result:
-  accuracy: 0.31520481370053227
-  loss: 236.13623046875
+  accuracy: 0.2625549641286739
+  loss: 701.447265625
 trainer:
-  epochs: 10
-  lr: 0.01
+  epochs: 20
+  lr: 0.001
