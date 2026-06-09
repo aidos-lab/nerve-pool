@@ -208,6 +208,7 @@ def _propagate_values_original(X, triangulation):
 
     # For correctness checks.
     edge_indices = []
+    face_indices = []
     for dim in range(1, max_dim):
         simplices_ = [s for s in simplices if len(s) == dim + 1]
         M = []
@@ -223,12 +224,14 @@ def _propagate_values_original(X, triangulation):
             edge_tuple = s - 1
             if len(edge_tuple) == 2:
                 edge_indices.append(edge_tuple)
+            if len(edge_tuple) == 3:
+                face_indices.append(edge_tuple)
             M.append(np.mean(X[edge_tuple, :], axis=0))
 
         M = np.asarray(M)
         values[dim] = torch.from_numpy(M).to(torch.float32)
 
-    return values, np.vstack(edge_indices).T
+    return values, np.vstack(edge_indices).T, np.vstack(face_indices).T
 
 
 # |%%--%%| <E5bAl0LvFV|krAA36IAWE>
@@ -253,7 +256,7 @@ data = ds[idx]
 data = ds[idx]
 X = _calculate_moment_curve(data.num_nodes, 2)
 
-mce, ei_original = _propagate_values_original(X, data.triangulation)
+mce, ei_original, fi_orig = _propagate_values_original(X, data.triangulation)
 print(ei_original)
 print(data.edge_index)
 
@@ -267,7 +270,7 @@ nodes, compared to the one skeleton transform, it is not possible to
 test the correctness. 
 """
 
-for idx in range(3):
+for idx in range(50):
     print(idx)
 
     data = ds[idx]
@@ -279,35 +282,40 @@ for idx in range(3):
         data.face,
     )
 
-    mce, ei_original = _propagate_values_original(X, data.triangulation)
+    mce, ei_original, fi_orig = _propagate_values_original(X, data.triangulation)
     mce = torch.tensor(mce[1], dtype=torch.float32)
+    print("---Edges---")
     print("ORIGINAL")
     print(torch.tensor(ei_original))
     print("DATA")
     print(data.edge_index)
+    print("---Faces---")
+    print(data.face[:, :6])
+    print(torch.tensor(fi_orig)[:, :6])
+    # assert torch.equal(torch.tensor(fi_orig), data.face)
 
-    # Assert that given the indices, they indeed coincide.
-    # Lex sort
-    ind = np.lexsort((data.edge_index[1].tolist(), data.edge_index[0].tolist()))
-
-    # Sort with lex
-    ef_correct = ef_correct[ind]
-    ei_correct = data.edge_index.clone()[:, ind]
-
-    # print(torch.round(torch.tensor(mce), decimals=2))
-
-    # assert torch.equal(torch.tensor(ei_original,dtype=torch.int32),ei_correct)
+    # # Assert that given the indices, they indeed coincide.
+    # # Lex sort
+    # ind = np.lexsort((data.edge_index[1].tolist(), data.edge_index[0].tolist()))
     #
-    # Mask to remove the reverse edges. The edge_indices are sorted lexicographically.
-    # mask = ei_correct[0] < ei_correct[1]
-    # print(ei_correct[:,mask])
-    # print(ei_original)
-
-    # # # print(ef_correct[mask])
-    # # # print(mce[1])
-    # # print(data.edge_index[:,mask])
-    # print(ef_correct[mask].shape)
-    # print(mce)
+    # # Sort with lex
+    # ef_correct = ef_correct[ind]
+    # ei_correct = data.edge_index.clone()[:, ind]
     #
-    # # Test passes, thus the impl is correct.
-    # assert torch.allclose(ef_correct[mask], mce)
+    # # print(torch.round(torch.tensor(mce), decimals=2))
+    #
+    # # assert torch.equal(torch.tensor(ei_original,dtype=torch.int32),ei_correct)
+    # #
+    # # Mask to remove the reverse edges. The edge_indices are sorted lexicographically.
+    # # mask = ei_correct[0] < ei_correct[1]
+    # # print(ei_correct[:,mask])
+    # # print(ei_original)
+    #
+    # # # # print(ef_correct[mask])
+    # # # # print(mce[1])
+    # # # print(data.edge_index[:,mask])
+    # # print(ef_correct[mask].shape)
+    # # print(mce)
+    # #
+    # # # Test passes, thus the impl is correct.
+    # # assert torch.allclose(ef_correct[mask], mce)
